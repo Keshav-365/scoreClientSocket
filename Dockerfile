@@ -50,6 +50,8 @@ ENV ASPNETCORE_ENVIRONMENT=Production \
     DOTNET_GCDynamicAdaptationMode=1 \
     TZ=Asia/Kolkata
 
-# Cloud Run injects PORT=8080 by default.
+# Cloud Run and Railway both inject a PORT env var at runtime (Railway's is dynamic,
+# not fixed at 8080) — the entrypoint below binds to whatever PORT is provided and
+# falls back to 8080 for local `docker run`/compose.
 EXPOSE 8080
 ENTRYPOINT ["sh", "-c", "ASPNETCORE_URLS=http://+:${PORT:-8080} exec dotnet scoreClientSocket.dll"]
