@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1.6
-# Build context: solution root (scoreproviderscoket/)
-# scoreprovidersocket.csproj references ../Modal so the context must include both folders.
+# Build context: solution root (scoreClientSocket/)
+# scoreClientSocket.csproj references ../Modal so the context must include both folders.
 
 ARG DOTNET_VERSION=10.0
 
@@ -9,19 +9,19 @@ FROM mcr.microsoft.com/dotnet/sdk:${DOTNET_VERSION} AS build
 WORKDIR /src
 
 # Copy project files first — restore is cached until a .csproj changes.
-COPY ["scoreprovidersocket/scoreprovidersocket.csproj", "scoreprovidersocket/"]
+COPY ["scoreClientSocket/scoreClientSocket.csproj", "scoreClientSocket/"]
 COPY ["BusinessServices/BusinessServices.csproj", "BusinessServices/"]
 COPY ["Modal/Modal.csproj", "Modal/"]
 
 RUN --mount=type=cache,id=nuget-socket,target=/root/.nuget/packages \
-    dotnet restore "scoreprovidersocket/scoreprovidersocket.csproj" \
+    dotnet restore "scoreClientSocket/scoreClientSocket.csproj" \
         --runtime linux-x64 \
         /p:PublishReadyToRun=true
 
 COPY . .
 
 RUN --mount=type=cache,id=nuget-socket,target=/root/.nuget/packages \
-    dotnet publish "scoreprovidersocket/scoreprovidersocket.csproj" \
+    dotnet publish "scoreClientSocket/scoreClientSocket.csproj" \
         -c Release \
         -o /app/publish \
         --runtime linux-x64 \
@@ -52,4 +52,4 @@ ENV ASPNETCORE_ENVIRONMENT=Production \
 
 # Cloud Run injects PORT=8080 by default.
 EXPOSE 8080
-ENTRYPOINT ["sh", "-c", "ASPNETCORE_URLS=http://+:${PORT:-8080} exec dotnet scoreprovidersocket.dll"]
+ENTRYPOINT ["sh", "-c", "ASPNETCORE_URLS=http://+:${PORT:-8080} exec dotnet scoreClientSocket.dll"]

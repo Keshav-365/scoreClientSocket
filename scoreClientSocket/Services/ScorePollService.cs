@@ -2,12 +2,12 @@ using BusinessServices.Implementation;
 using BusinessServices.Interface;
 using Microsoft.AspNetCore.SignalR;
 using Modal;
-using scoreprovidersocket.Hubs;
+using scoreClientSocket.Hubs;
 using System.Collections.Concurrent;
 using System.Net.Http.Json;
 using System.Text.Json;
 
-namespace scoreprovidersocket.Services
+namespace scoreClientSocket.Services
 {
     // Pulls fresh score data for events with recent local client interest straight from
     // ScoreProvider's HTTP API (POST /api/EventInfoBulk), updates the local ConcurrentDictionary
@@ -17,7 +17,7 @@ namespace scoreprovidersocket.Services
     public class ScorePollService : BackgroundService
     {
         private readonly ILocalEventCacheService _cache;
-        private readonly IHubContext<bfScore> _hub;
+        private readonly IHubContext<clientScore> _hub;
         private readonly IHttpClientFactory _httpClientFactory;
         private readonly ILogger<ScorePollService> _logger;
 
@@ -27,7 +27,7 @@ namespace scoreprovidersocket.Services
 
         private static readonly JsonSerializerOptions JsonOptions = new() { PropertyNameCaseInsensitive = true };
 
-        public ScorePollService(ILocalEventCacheService cache, IHubContext<bfScore> hub,
+        public ScorePollService(ILocalEventCacheService cache, IHubContext<clientScore> hub,
             IHttpClientFactory httpClientFactory, ILogger<ScorePollService> logger)
         {
             _cache = cache;

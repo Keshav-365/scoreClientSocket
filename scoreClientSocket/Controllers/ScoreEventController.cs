@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Modal;
 
-namespace scoreprovidersocket.Controllers
+namespace scoreClientSocket.Controllers
 {
     [Route("api")]
     [ApiController]

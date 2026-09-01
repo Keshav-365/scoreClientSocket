@@ -6,14 +6,14 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.OpenApi.Models;
 using Modal;
 using Newtonsoft.Json;
-using scoreprovidersocket.code;
-using scoreprovidersocket.Hubs;
-using scoreprovidersocket.Services;
+using scoreClientSocket.code;
+using scoreClientSocket.Hubs;
+using scoreClientSocket.Services;
 using System.IO.Compression;
 using System.Text.Json.Serialization;
 using System.Threading.RateLimiting;
 
-string strProject = "ScoreproviderSocket";
+string strProject = "ScoreClientSocket";
 var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllers()
@@ -169,7 +169,7 @@ var instanceId = AppCache.InstanceId;
 var startupLogger = app.Services.GetRequiredService<ILoggerFactory>().CreateLogger("ScoreSocket");
 
 app.Lifetime.ApplicationStarted.Register(() =>
-    startupLogger.LogWarning("ScoreProviderSocket | Instance | STARTED | instance={InstanceId} | hub={Hub} | time={Time}",
+    startupLogger.LogWarning("ScoreClientSocket | Instance | STARTED | instance={InstanceId} | hub={Hub} | time={Time}",
         instanceId, AppCache.Settings.HubSettings.HubName, common.GetDateTime()));
 
 app.Lifetime.ApplicationStopping.Register(() =>
@@ -177,8 +177,8 @@ app.Lifetime.ApplicationStopping.Register(() =>
     // Write directly to stderr FIRST — synchronous flush, survives Cloud Run's SIGKILL window.
     // The Console logger uses a background queue that may not drain before SIGKILL arrives.
     Console.Error.WriteLine(
-        $"ScoreProviderSocket | Instance | STOPPING | instance={instanceId} | hub={AppCache.Settings.HubSettings.HubName} | time={common.GetDateTime()}");
-    startupLogger.LogWarning("ScoreProviderSocket | Instance | STOPPING | instance={InstanceId} | hub={Hub} | time={Time}",
+        $"ScoreClientSocket | Instance | STOPPING | instance={instanceId} | hub={AppCache.Settings.HubSettings.HubName} | time={common.GetDateTime()}");
+    startupLogger.LogWarning("ScoreClientSocket | Instance | STOPPING | instance={InstanceId} | hub={Hub} | time={Time}",
         instanceId, AppCache.Settings.HubSettings.HubName, common.GetDateTime());
 });
 
@@ -208,7 +208,7 @@ app.UseEndpoints(endpoints =>
     endpoints.MapControllerRoute("default", "{controller=Home}/{action=Index}/{id?}");
     if (!string.IsNullOrEmpty(AppCache.Settings.HubSettings.HubName))
     {
-        endpoints.MapHub<bfScore>($"/{AppCache.Settings.HubSettings.HubName}", options =>
+        endpoints.MapHub<clientScore>($"/{AppCache.Settings.HubSettings.HubName}", options =>
         {
             options.Transports = Microsoft.AspNetCore.Http.Connections.HttpTransportType.WebSockets;
         });

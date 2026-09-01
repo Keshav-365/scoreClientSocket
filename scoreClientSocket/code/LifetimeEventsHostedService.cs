@@ -1,6 +1,6 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 
-namespace scoreprovidersocket.code
+namespace scoreClientSocket.code
 {
     internal class LifetimeEventsHostedService : IHostedService
     {

@@ -2,7 +2,7 @@ using BusinessServices.Implementation;
 using BusinessServices.Interface;
 using Modal;
 
-namespace scoreprovidersocket.Services
+namespace scoreClientSocket.Services
 {
     // Replaces the per-client OnUpdateScore fan-out with a single batched call.
     // getupdateScore() only stamps lastconnectiontime in cache; this service

@@ -1,10 +1,10 @@
 using BusinessServices.Implementation;
 using BusinessServices.Interface;
 using Modal;
-using scoreprovidersocket.Services;
+using scoreClientSocket.Services;
 
 
-namespace scoreprovidersocket.code
+namespace scoreClientSocket.code
 {
     public static class ContainerExtension
     {

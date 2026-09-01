@@ -1,6 +1,6 @@
-name: score-socket
+name: score-client-socket
 
-# Standalone: runs scoreprovidersocket only (no ScoreProvider, no real score data).
+# Standalone: runs scoreClientSocket only (no ScoreProvider, no real score data).
 # Use this when developing the socket layer in isolation.
 #
 # To run BOTH services together use the root docker-compose.yml instead:
@@ -12,19 +12,19 @@ name: score-socket
 
 services:
 
-  # ── scoreprovidersocket ─────────────────────────────────────────────────────
-  scoreprovidersocket:
+  # ── scoreClientSocket ─────────────────────────────────────────────────────
+  scoreClientSocket:
     build:
       context: .
       dockerfile: Dockerfile
-    image: scoreprovidersocket:local
-    container_name: scoreprovidersocket
+    image: scoreclientsocket:local
+    container_name: scoreClientSocket
     ports:
-      - "5003:8080"
+      - "5004:8080"
     environment:
       ASPNETCORE_ENVIRONMENT: Development
       Port: ""                          # blank = use PORT env (8080 inside container)
-      Hubettings__HubName: bfScore
+      Hubettings__HubName: clientScore
       Hubettings__HubKeepLiveSecond: "20"
       TZ: Asia/Kolkata
     healthcheck:
@@ -45,9 +45,9 @@ services:
   #     ASPNETCORE_ENVIRONMENT: Development
   #     TZ: Asia/Kolkata
   #     BackgroundWorker__Enabled: "true"
-  #     # Tell ScoreProvider to connect to scoreprovidersocket inside the compose network:
-  #     ScoreProviderSockets__0: http://scoreprovidersocket:8080/bfScore
+  #     # Tell ScoreProvider to connect to scoreClientSocket inside the compose network:
+  #     ScoreProviderSockets__0: http://scoreClientSocket:8080/clientScore
   #   depends_on:
-  #     scoreprovidersocket:
+  #     scoreClientSocket:
   #       condition: service_healthy
   #   restart: unless-stopped

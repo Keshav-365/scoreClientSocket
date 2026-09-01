@@ -2,23 +2,23 @@ using BusinessServices.Implementation;
 using BusinessServices.Interface;
 using Microsoft.AspNetCore.SignalR;
 using Modal;
-using scoreprovidersocket.Services;
+using scoreClientSocket.Services;
 
-namespace scoreprovidersocket.Hubs
+namespace scoreClientSocket.Hubs
 {
     // Hub is transient — a new instance is created per method call by SignalR.
     // All business logic lives in the getScore singleton so it runs only once.
     // This class is a thin shell: it passes connection-specific context
     // (Context.ConnectionId, Groups, Clients) to the singleton as needed.
-    public class bfScore : Hub
+    public class clientScore : Hub
     {
         private readonly getScore _gs;
         private readonly IDailyStatsService _dailyStats;
         private readonly IActiveConnectionCountService _connCount;
-        private readonly ILogger<bfScore> _logger;
+        private readonly ILogger<clientScore> _logger;
 
 
-        public bfScore(getScore gs, IDailyStatsService dailyStats, IActiveConnectionCountService connCount, ILogger<bfScore> logger)
+        public clientScore(getScore gs, IDailyStatsService dailyStats, IActiveConnectionCountService connCount, ILogger<clientScore> logger)
         {
             _gs = gs;
             _dailyStats = dailyStats;

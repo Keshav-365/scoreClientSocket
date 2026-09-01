@@ -1,7 +1,7 @@
 using BusinessServices.Interface;
 using Modal;
 
-namespace scoreprovidersocket.code
+namespace scoreClientSocket.code
 {
     // Registers this Cloud Run instance with IInstanceTrackerService on startup, sends a
     // heartbeat every 30s, and unregisters on graceful shutdown. With no shared store

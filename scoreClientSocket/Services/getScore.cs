@@ -2,24 +2,24 @@ using BusinessServices.Implementation;
 using BusinessServices.Interface;
 using Microsoft.AspNetCore.SignalR;
 using Modal;
-using scoreprovidersocket.Hubs;
+using scoreClientSocket.Hubs;
 using System.Collections.Concurrent;
 
-namespace scoreprovidersocket.Services
+namespace scoreClientSocket.Services
 {
     // Singleton — created once at startup. Holds all score logic so the transient
-    // bfScore hub only needs one constructor parameter (this class).
+    // clientScore hub only needs one constructor parameter (this class).
     public class getScore
     {
         private readonly ILocalEventCacheService _cache;
-        private readonly IHubContext<bfScore> _hub;
+        private readonly IHubContext<clientScore> _hub;
         private readonly UpstreamTracker _upstream;
 
         // Tracks event IDs whose OnRequestEvent was fired but no ReceiveScore has arrived yet.
         // Replayed to any newly registered upstream to cover the reconnect-window gap.
         private readonly ConcurrentDictionary<string, byte> _pendingEventRequests = new();
 
-        public getScore(ILocalEventCacheService cache, IHubContext<bfScore> hub, UpstreamTracker upstream)
+        public getScore(ILocalEventCacheService cache, IHubContext<clientScore> hub, UpstreamTracker upstream)
         {
             _cache = cache;
             _hub = hub;
@@ -88,7 +88,7 @@ namespace scoreprovidersocket.Services
             }));
         }
 
-        // Called by bfScore.RegisterAsUpstream() so that any OnRequestEvent calls that were
+        // Called by clientScore.RegisterAsUpstream() so that any OnRequestEvent calls that were
         // fired during a reconnect window (no upstream registered) are replayed to the newly
         // connected ScoreProvider instance.
         public async Task ReplayPendingRequests(string upstreamConnectionId)
@@ -106,7 +106,7 @@ namespace scoreprovidersocket.Services
             }
         }
 
-        // Called by bfScore.RegisterAsUpstream() to tell the newly connected ScoreProvider
+        // Called by clientScore.RegisterAsUpstream() to tell the newly connected ScoreProvider
         // which event IDs are already in our cache. ScoreProvider will push fresh data for
         // any it has, and seed any it doesn't know about yet.
         public async Task SyncCachedEventsToUpstream(string upstreamConnectionId)

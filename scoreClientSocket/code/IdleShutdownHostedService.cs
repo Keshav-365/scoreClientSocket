@@ -1,7 +1,7 @@
 using BusinessServices.Interface;
 using Modal;
 
-namespace scoreprovidersocket.code
+namespace scoreClientSocket.code
 {
     // Forcefully (but gracefully) stops this instance when it has served ZERO end-client
     // connections for a sustained period, so idle Cloud Run instances drain instead of
