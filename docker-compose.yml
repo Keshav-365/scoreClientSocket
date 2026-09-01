@@ -1,0 +1,53 @@
+name: score-socket
+
+# Standalone: runs scoreprovidersocket only (no ScoreProvider, no real score data).
+# Use this when developing the socket layer in isolation.
+#
+# To run BOTH services together use the root docker-compose.yml instead:
+#   cd .. && docker compose up --build
+#
+# Usage (this file):
+#   docker compose up --build          # socket only
+#   docker compose down
+
+services:
+
+  # ── scoreprovidersocket ─────────────────────────────────────────────────────
+  scoreprovidersocket:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: scoreprovidersocket:local
+    container_name: scoreprovidersocket
+    ports:
+      - "5003:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      Port: ""                          # blank = use PORT env (8080 inside container)
+      Hubettings__HubName: bfScore
+      Hubettings__HubKeepLiveSecond: "20"
+      TZ: Asia/Kolkata
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/api/ip > /dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 30s
+    restart: unless-stopped
+
+  # ── scoreprovider (optional — include to test full stack locally) ────────────
+  # scoreprovider:
+  #   image: scoreprovider:local        # build ScoreProvider separately first
+  #   container_name: scoreprovider
+  #   ports:
+  #     - "5000:8080"
+  #   environment:
+  #     ASPNETCORE_ENVIRONMENT: Development
+  #     TZ: Asia/Kolkata
+  #     BackgroundWorker__Enabled: "true"
+  #     # Tell ScoreProvider to connect to scoreprovidersocket inside the compose network:
+  #     ScoreProviderSockets__0: http://scoreprovidersocket:8080/bfScore
+  #   depends_on:
+  #     scoreprovidersocket:
+  #       condition: service_healthy
+  #   restart: unless-stopped

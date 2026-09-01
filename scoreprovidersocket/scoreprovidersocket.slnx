@@ -1,0 +1,7 @@
+<Solution>
+  <Folder Name="/Modal/">
+    <Project Path="../Modal/Modal.csproj" />
+  </Folder>
+  <Project Path="../BusinessServices/BusinessServices.csproj" />
+  <Project Path="scoreprovidersocket.csproj" />
+</Solution>

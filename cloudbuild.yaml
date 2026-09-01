@@ -1,0 +1,257 @@
+substitutions:
+  _REGION: europe-north1
+  _REPO: scoreprovidersocket-repo
+  _IMAGE: scorescoket
+  _SERVICE: scorescoket
+  _MIN_INSTANCES: "1"
+  _MAX_INSTANCES: "5"
+  _CONCURRENCY: "800"
+  _CPU: "1"
+  _MEMORY: 1Gi
+  _TIMEOUT: "3600"
+
+steps:
+  # ---------- Git Config ----------
+  - name: gcr.io/cloud-builders/git
+    entrypoint: git
+    args: [config, --global, user.email, kalijson33@gmail.com]
+    id: Git config email
+
+  - name: gcr.io/cloud-builders/git
+    entrypoint: git
+    args: [config, --global, user.name, kalijson]
+    id: Git config name
+
+  # ---------- Pull Cache Image (speed up build) ----------
+  - name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker pull ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest || true
+    id: Pull Cache
+
+  # ---------- Build ----------
+  # Uses BuildKit inline cache to reuse layers from previous builds.
+  # Cache-from latest tag dramatically reduces build time on unchanged layers.
+  - name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker build \
+          --build-arg BUILDKIT_INLINE_CACHE=1 \
+          --cache-from ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest \
+          -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$COMMIT_SHA \
+          -t ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest \
+          .
+    env:
+      - DOCKER_BUILDKIT=1
+    id: Build
+
+  # ---------- Push COMMIT_SHA tag ----------
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$COMMIT_SHA
+    id: Push SHA
+
+  # ---------- Push latest tag (for cache) ----------
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
+    id: Push Latest
+
+  # ---------- Deploy to Cloud Run ----------
+  #
+  # SignalR / WebSocket tuning notes:
+  # ─────────────────────────────────────────────────────────────────────────────
+  # --concurrency=1000
+  #   Cloud Run default is 80 — far too low for WebSockets.
+  #   Each open WebSocket = 1 concurrent request that never closes.
+  #   1000 × 20 instances = 20,000 total simultaneous connections.
+  #   Memory guide: ~50 KB per SignalR connection
+  #     1000 conns ≈ 50 MB SignalR + ~150 MB .NET runtime + ~100 MB app = ~300 MB
+  #   1Gi gives comfortable headroom; raise to 2Gi if p99 memory > 800Mi.
+  #
+  # --session-affinity
+  #   Routes the same client back to the same instance so the WebSocket is
+  #   not torn down on re-connection. NOT 100% guaranteed under rolling deploys
+  #   or instance restarts — this is the sole cross-request routing mechanism
+  #   now that there is no shared backplane (Redis was removed).
+  #
+  # --no-cpu-throttling
+  #   Without this, Cloud Run throttles CPU to near-zero between requests.
+  #   WebSocket keep-alive and hub loops need CPU at all times.
+  #
+  # --cpu=2
+  #   1 vCPU can saturate quickly with 1000 concurrent message loops.
+  #   2 vCPU gives headroom for GC, JSON serialisation, and burst traffic.
+  #
+  # --timeout=3600
+  #   Default 300 s would close every WebSocket after 5 minutes.
+  #   3600 s (1 hour) matches typical long-lived connection patterns.
+  #   Clients must reconnect after 1 hour; handle OnReconnected in your hub.
+  #
+  # --min-instances=1
+  #   Keeps one warm instance alive so the first connection never hits a
+  #   cold start (which can take 3–8 s for a .NET app).
+  #
+  # --cpu-boost
+  #   Temporarily doubles CPU during container startup — reduces cold-start
+  #   time for .NET by allowing faster JIT compilation.
+  #
+  # No shared backplane: with >1 instance, Clients.All / Clients.Group etc. only
+  # reach clients connected to the SAME instance — --session-affinity above is
+  # what keeps a given client pinned to one instance across reconnects.
+  # ─────────────────────────────────────────────────────────────────────────────
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$COMMIT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --allow-unauthenticated
+
+      # ── Scaling ────────────────────────────────────────────────────────────
+      - --min-instances=${_MIN_INSTANCES}
+      - --max-instances=${_MAX_INSTANCES}
+
+      # ── WebSocket / SignalR ─────────────────────────────────────────────────
+      - --concurrency=${_CONCURRENCY}
+      - --session-affinity
+      - --timeout=${_TIMEOUT}
+
+      # ── CPU & Memory ────────────────────────────────────────────────────────
+      - --cpu=${_CPU}
+      - --memory=${_MEMORY}
+      - --cpu-boost
+      #- --no-cpu-throttling
+      - --cpu-throttling
+
+      # ── Network ─────────────────────────────────────────────────────────────
+      - --port=8080
+
+      # ── Environment variables ───────────────────────────────────────────────
+      - >-
+        --set-env-vars=ASPNETCORE_ENVIRONMENT=Production,
+        TZ=Asia/Kolkata,
+        DOTNET_gcServer=1,
+        DOTNET_GCHeapHardLimit=805306368,
+        DOTNET_SHUTDOWNTIMEOUTSECONDS=25,
+        Logging__LogLevel__Default=Information,
+        Logging__LogLevel__Microsoft.AspNetCore.SignalR=Warning,
+        Logging__LogLevel__Microsoft.AspNetCore.Hosting=Warning,
+       
+
+      - --quiet
+    id: Deploy
+
+  # ---------- Clear Cloud Run logs ----------
+  # Deletes stdout / stderr / request log entries for this service so each
+  # deploy starts with a clean slate. Cloud Logging has no per-service delete;
+  # this removes all entries under the three Cloud Run log names project-wide.
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo "=== Clearing Cloud Run logs ==="
+        for LOG in stdout stderr requests; do
+          gcloud logging logs delete \
+            "run.googleapis.com%2F$${LOG}" \
+            --project=$PROJECT_ID \
+            --quiet 2>/dev/null || true
+        done
+        echo "=== Logs cleared ==="
+    id: Clear Logs
+
+  # ---------- Tag latest deployed image ----------
+  # Useful for rollback: gcloud run deploy --image=.../scorescoket:stable
+  - name: gcr.io/cloud-builders/docker
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        docker tag \
+          ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$COMMIT_SHA \
+          ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:stable
+        docker push ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:stable
+    id: Tag Stable
+
+  # ---------- Cleanup old revisions (keep latest 10) ----------
+  # Removes old Cloud Run revisions to avoid hitting the 1000-revision limit
+  # and to keep the console readable. The active revision is never deleted.
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo "=== Cleaning up old revisions of ${_SERVICE} (keeping latest 10) ==="
+        OLD_REVISIONS=$(gcloud run revisions list \
+          --service=${_SERVICE} \
+          --region=${_REGION} \
+          --project=$PROJECT_ID \
+          --format="value(name)" \
+          --sort-by="~creationTimestamp" \
+          | tail -n +11)
+
+        if [ -z "$$OLD_REVISIONS" ]; then
+          echo "Nothing to clean up."
+        else
+          echo "$$OLD_REVISIONS" | while read REV; do
+            if [ -n "$$REV" ]; then
+              echo "Deleting revision: $$REV"
+              gcloud run revisions delete "$$REV" \
+                --region=${_REGION} \
+                --project=$PROJECT_ID \
+                --quiet || echo "Skipped (may be active): $$REV"
+            fi
+          done
+        fi
+        echo "=== Cleanup complete ==="
+    id: Cleanup
+
+  # ---------- Smoke test (verify deployment is healthy) ----------
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        echo "=== Verifying deployment ==="
+        SERVICE_URL=$(gcloud run services describe ${_SERVICE} \
+          --region=${_REGION} \
+          --project=$PROJECT_ID \
+          --format="value(status.url)")
+
+        echo "Service URL: $$SERVICE_URL"
+
+        # Health check (expects 200 on /health or /)
+        HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+          --max-time 15 \
+          "$$SERVICE_URL/health" || echo "000")
+
+        echo "Health check HTTP status: $$HTTP_STATUS"
+
+        if [ "$$HTTP_STATUS" = "200" ]; then
+          echo "✅ Deployment healthy!"
+        else
+          echo "⚠️  Health check returned $$HTTP_STATUS — check logs."
+          echo "   (Non-blocking: WebSocket apps may not expose /health)"
+        fi
+    id: Smoke Test
+
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:$COMMIT_SHA
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:latest
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/${_REPO}/${_IMAGE}:stable
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: E2_HIGHCPU_8
+  env:
+    - DOCKER_BUILDKIT=1

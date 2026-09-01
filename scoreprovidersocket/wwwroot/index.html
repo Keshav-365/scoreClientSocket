@@ -1,0 +1,67 @@
+﻿<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Get Market Rate</title>
+    <link href="lib/css/style.css" rel="stylesheet" />
+</head>
+<body>
+    <div class="container">
+        <form id="contact" action="" method="post">
+            <h3>Get Market</h3>
+            <div id="signalrConnect">
+                <fieldset>
+                    <input id="txtSignalr" placeholder="Link" type="text" tabindex="1" value="http://localhost:5214/SignalR" />
+                </fieldset>
+                <fieldset>
+                    <input name="button" type="button" id="singalr-submit" value="Connect Socket" onclick="Connectsignar()" />
+                </fieldset>
+            </div>
+            <h4 id="spmsg">-</h4>
+            <div id="divForm" style="display:none">
+                <fieldset>
+                    <input id="txtEventID" placeholder="Event RefID" type="text" tabindex="1" />
+                </fieldset>
+                <fieldset>
+                    <buttonset>
+                        <input name="button" type="button" id="contactMarket-submit" value="Add score" onclick="scoreConnect()" style="max-width :48%;" />
+                    </buttonset>
+                    <buttonset>
+                        <input name="button" type="button" id="removeMarket-submit" value="Remove score" onclick="scoreDisConnect()" style="max-width :48%;background-color: crimson;" />
+                    </buttonset>
+                </fieldset>
+                <fieldset>
+                    <buttonset>
+                        <input name="button" type="button" id="contactStatus-submit" value="Add Short Score" onclick="ShortScoreConnect()" style="max-width :48%;" />
+                    </buttonset>
+                    <buttonset>
+                        <input name="button" type="button" id="removeStatus-submit" value="Remove Short Score" onclick="ShortScoreDisConnect()" style="max-width :48%;background-color: crimson;" />
+                    </buttonset>
+                </fieldset>
+                <div id="scoreControl">
+
+                </div>
+            </div>
+        </form>
+    </div>
+    <script src="lib/jquery-1.6.4.min.js"></script>
+    <script src="lib/signalr.min.js"></script>
+    <script src="lib/scoredata.js?v=7"></script>
+    <script>
+        $(document).ready(function () {
+            // Get the domain name from the current URL
+            //const domainName = window.location.hostname;
+            const domainName = window.location.origin;
+            $('#txtSignalr').val(domainName + '/bfScore');
+
+            //document.getElementById('domain-name').textContent = `Domain: ${domainName}`;
+        });
+        function Connectsignar() {
+            var vlink = $('#txtSignalr').val();
+            if (vlink != "") {
+                getConnect(vlink);
+            }
+        }
+    </script>
+</body>
+</html>

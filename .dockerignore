@@ -1,0 +1,26 @@
+# Build outputs
+**/bin/
+**/obj/
+**/out/
+**/publish/
+
+# IDE / VCS
+.vs/
+**/.vs/
+.vscode/
+.idea/
+.git/
+.gitignore
+.gitattributes
+
+# Docker files (not needed inside image)
+Dockerfile
+.dockerignore
+docker-compose*.yml
+cloudbuild.yaml
+
+# Misc
+*.user
+*.suo
+*.log
+*.md
