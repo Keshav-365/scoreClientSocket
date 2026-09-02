@@ -1,12 +1,17 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Modal.Cache;
 
 namespace Modal
 {
     public static class AppCache
     {
         public static AppSettings Settings { get; set; } = new();
+
+        // Bound from appsettings.json "Agents" (Program.cs). Backs AgentAuthFilter's
+        // key + per-agent IP whitelist checks.
+        public static List<AgentConfig> Agents { get; set; } = new();
 
         // Computed once at first access — guaranteed same value across all singletons.
         // Uses HOSTNAME (set automatically by Cloud Run per container) or falls back
