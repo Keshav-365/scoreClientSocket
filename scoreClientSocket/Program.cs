@@ -75,6 +75,35 @@ if (enableSwagger)
     builder.Services.AddSwaggerGen(c =>
     {
         c.SwaggerDoc(developmentVersion, new OpenApiInfo { Title = strProject, Version = developmentVersion });
+
+        // When AgentAuthFilter is enforcing keys, give Swagger UI an "Authorize" button so the
+        // key gets attached to every "Try it out" call instead of failing with 401.
+        if (AppCache.Settings.AgentAuth.isActive)
+        {
+            string keyHeader = string.IsNullOrEmpty(AppCache.Settings.AgentAuth.KeyHeader)
+                ? "X-App"
+                : AppCache.Settings.AgentAuth.KeyHeader;
+
+            c.AddSecurityDefinition("agentKey", new OpenApiSecurityScheme
+            {
+                Name = keyHeader,
+                Type = SecuritySchemeType.ApiKey,
+                In = ParameterLocation.Header,
+                Description = "Agent key required by AgentAuthFilter (see appsettings.json Agents)."
+            });
+
+            var securityRequirement = new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "agentKey" }
+                    },
+                    new string[] { }
+                }
+            };
+            c.AddSecurityRequirement(securityRequirement);
+        }
     });
 }
 
