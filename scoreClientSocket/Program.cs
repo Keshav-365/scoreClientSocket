@@ -234,6 +234,20 @@ app.UseCookiePolicy();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+// UseDefaultFiles only resolves a directory's index.html when the URL ends in "/" —
+// "/docs" (no trailing slash) doesn't match any static file and falls through to
+// AgentAuthFilter below, which then wrongly demands a key for what should be a public
+// docs page. Redirect the bare path to the trailing-slash form before that happens.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/docs")
+    {
+        context.Response.Redirect($"{context.Request.PathBase}/docs/", permanent: true);
+        return;
+    }
+    await next();
+});
+
 // Agent key + per-agent IP whitelist check. Runs after static files (wwwroot stays public)
 // and before endpoint routing, so it covers both /api/* controller calls and the SignalR
 // hub's negotiate/WebSocket-upgrade requests.
