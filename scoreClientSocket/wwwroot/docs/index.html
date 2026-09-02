@@ -301,30 +301,6 @@
           </div>
         </div>
 
-        <div class="endpoint">
-          <div class="endpoint-head"><span class="method">GET</span><span class="path">/api/ScoreIframe</span></div>
-          <div class="endpoint-body">
-            <p style="margin:0;font-size:.9rem;color:var(--ink-muted);">Embeddable iframe payload for an event — proxied live, not cached.</p>
-            <div>
-              <p class="label-sm">Query params</p>
-              <div class="table-wrap"><table>
-                <thead><tr><th>Param</th><th>Type</th><th>Required</th></tr></thead>
-                <tbody>
-                  <tr><td><code class="fld">eventId</code></td><td>string</td><td>yes</td></tr>
-                  <tr><td><code class="fld">link</code></td><td>int</td><td>no · default 0</td></tr>
-                  <tr><td><code class="fld">color</code></td><td>string</td><td>no</td></tr>
-                  <tr><td><code class="fld">font</code></td><td>string</td><td>no</td></tr>
-                </tbody>
-              </table></div>
-            </div>
-            <div>
-              <p class="label-sm">Response</p>
-              <pre><code>{ <span class="k">"success"</span>: true, <span class="k">"data"</span>: { <span class="k">/* provider iframe payload */</span> }, <span class="k">"message"</span>: <span class="k">""</span>, <span class="k">"status"</span>: 200 }</code></pre>
-              <p style="font-size:.85rem;color:var(--ink-muted);margin:8px 0 0;"><code class="inline">success: false</code> means <code class="inline">eventId</code> was missing, or the upstream provider is unreachable/not configured.</p>
-            </div>
-          </div>
-        </div>
-
       </section>
 
       <section id="rest-ops">
