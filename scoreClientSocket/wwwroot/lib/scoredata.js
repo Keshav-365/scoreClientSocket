@@ -14,8 +14,13 @@ var UPDATE_TYPE = {
 };
 var isConnected = false;
 
-function getConnect(vURl) {
+function getConnect(vURl, vKey) {
     vUri = vURl;
+    // Agent key travels as "?key=" (not a header) — the browser's native WebSocket
+    // upgrade request can't carry custom headers. See AgentAuthFilter.
+    if (vKey) {
+        vUri += (vUri.indexOf('?') === -1 ? '?' : '&') + 'key=' + encodeURIComponent(vKey);
+    }
     connectionRate = new signalR.HubConnectionBuilder()
         .withUrl(vUri)
         .build();
