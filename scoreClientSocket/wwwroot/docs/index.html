@@ -187,7 +187,6 @@
     <div class="navgroup">
       <p class="navgroup-label">REST API</p>
       <a href="#rest-scorecard">Scorecard &amp; iframe</a>
-      <a href="#rest-events">Events &amp; cache</a>
       <a href="#rest-ops">Operational</a>
     </div>
     <div class="navgroup">
@@ -347,44 +346,6 @@
               <tbody><tr><td><code class="fld">url</code></td><td>string</td><td class="meaning">yes, must start with the Betfair player origin</td></tr></tbody>
             </table></div>
             <p style="font-size:.85rem;color:var(--ink-muted);margin:0;">Returns the proxied HTML, or <span class="status err" style="padding:1px 6px;">502</span> if unreachable.</p>
-          </div>
-        </div>
-      </section>
-
-      <section id="rest-events">
-        <h3 class="sub">Events &amp; cache</h3>
-
-        <div class="endpoint">
-          <div class="endpoint-head"><span class="method">GET</span><span class="path">/api/EventList</span></div>
-          <div class="endpoint-body">
-            <p style="margin:0;font-size:.9rem;color:var(--ink-muted);">Every event currently in this instance's local cache.</p>
-            <pre><code>{ <span class="k">"issuccess"</span>: true, <span class="k">"count"</span>: 2, <span class="k">"data"</span>: [ <span class="k">/* EventState objects */</span> ] }</code></pre>
-          </div>
-        </div>
-
-        <div class="endpoint">
-          <div class="endpoint-head"><span class="method">GET</span><span class="path">/api/EventInfo</span></div>
-          <div class="endpoint-body">
-            <div class="table-wrap"><table>
-              <thead><tr><th>Param</th><th>Type</th><th>Required</th></tr></thead>
-              <tbody><tr><td><code class="fld">eventId</code></td><td>int</td><td>yes</td></tr></tbody>
-            </table></div>
-            <pre><code>{ <span class="k">"issuccess"</span>: true, <span class="k">"data"</span>: <span class="k">"&lt;JSON-serialized EventState&gt;"</span> }</code></pre>
-            <p style="font-size:.85rem;color:var(--ink-muted);margin:0;"><span class="status err" style="padding:1px 6px;">404</span> if the event isn't cached on this instance — each instance keeps its own local cache.</p>
-          </div>
-        </div>
-
-        <div class="endpoint">
-          <div class="endpoint-head"><span class="method">GET</span><span class="path">/api/ClearEvent</span></div>
-          <div class="endpoint-body">
-            <p style="margin:0;font-size:.9rem;color:var(--ink-muted);">Removes an event from the cache. <code class="inline">eventId=0</code> (or omitted) clears every event on every instance. Operational tool — not typically needed for a read-only integration.</p>
-          </div>
-        </div>
-
-        <div class="endpoint">
-          <div class="endpoint-head"><span class="method">GET</span><span class="path">/api/ClearlinkCache</span></div>
-          <div class="endpoint-body">
-            <p style="margin:0;font-size:.9rem;color:var(--ink-muted);">Clears cached scorecard links from <code class="inline">/api/Scorecard</code>. <code class="inline">eventId="0"</code> (default) clears all.</p>
           </div>
         </div>
       </section>
