@@ -325,29 +325,6 @@
           </div>
         </div>
 
-        <div class="endpoint">
-          <div class="endpoint-head"><span class="method">GET</span><span class="path">/api/CheckWidget</span></div>
-          <div class="endpoint-body">
-            <p style="margin:0;font-size:.9rem;color:var(--ink-muted);">HEAD-checks a widget URL before you render it, so you don't show a broken embed.</p>
-            <div class="table-wrap"><table>
-              <thead><tr><th>Param</th><th>Type</th><th>Required</th></tr></thead>
-              <tbody><tr><td><code class="fld">url</code></td><td>string</td><td>yes</td></tr></tbody>
-            </table></div>
-            <pre><code>{ <span class="k">"available"</span>: true }</code></pre>
-          </div>
-        </div>
-
-        <div class="endpoint">
-          <div class="endpoint-head"><span class="method">GET</span><span class="path">/api/widget-proxy</span></div>
-          <div class="endpoint-body">
-            <p style="margin:0;font-size:.9rem;color:var(--ink-muted);">Reverse-proxies the Betfair video player, stripping frame-blocking headers so it can be embedded. Only <code class="inline">https://videoplayer.betfair.com/...</code> URLs are allowed — anything else is <span class="status err" style="padding:1px 6px;">400</span>.</p>
-            <div class="table-wrap"><table>
-              <thead><tr><th>Param</th><th>Type</th><th>Required</th></tr></thead>
-              <tbody><tr><td><code class="fld">url</code></td><td>string</td><td class="meaning">yes, must start with the Betfair player origin</td></tr></tbody>
-            </table></div>
-            <p style="font-size:.85rem;color:var(--ink-muted);margin:0;">Returns the proxied HTML, or <span class="status err" style="padding:1px 6px;">502</span> if unreachable.</p>
-          </div>
-        </div>
       </section>
 
       <section id="rest-ops">
