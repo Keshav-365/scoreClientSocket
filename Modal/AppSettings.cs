@@ -21,6 +21,7 @@ namespace Modal
         public IdleShutdownSettings IdleShutdown { get; set; } = new();
         public ScorePollSettings ScorePoll { get; set; } = new();
         public AgentAuthSettings AgentAuth { get; set; } = new();
+        public ConnectionLoggingSettings ConnectionLogging { get; set; } = new();
     }
 
     public class SwaggerSettings
@@ -106,5 +107,14 @@ namespace Modal
         // Header name callers pass their agent key in. Query string "?key=" is always
         // accepted too, since a browser's native WebSocket upgrade can't carry custom headers.
         public string KeyHeader { get; set; } = "X-App";
+    }
+
+    // Toggles the per-connection "Client CONNECTED/DISCONNECTED" console/log lines
+    // in clientScore hub (in addition to the always-on instance-level socket-started
+    // line logged at startup in Program.cs). Off by default in high-traffic environments
+    // would keep log volume down; on by default here so connection activity is visible.
+    public class ConnectionLoggingSettings
+    {
+        public bool Enabled { get; set; } = true;
     }
 }

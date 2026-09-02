@@ -270,6 +270,13 @@ app.UseEndpoints(endpoints =>
 if (!string.IsNullOrEmpty(AppCache.Settings.HubSettings.HubName))
 {
     var _GetScore = app.Services.GetRequiredService<getScore>();
+    startupLogger.LogWarning("ScoreClientSocket | Socket | STARTED | hub=/{Hub} | time={Time}",
+        AppCache.Settings.HubSettings.HubName, common.GetDateTime());
+}
+else
+{
+    startupLogger.LogWarning("ScoreClientSocket | Socket | NOT STARTED — HubName not configured | time={Time}",
+        common.GetDateTime());
 }
 app.Run();
 
@@ -311,4 +318,6 @@ static void ApplyEnvOverrides(AppSettings s)
 
     if (bool.TryParse(e("AGENT_AUTH_ACTIVE"), out var aaa)) s.AgentAuth.isActive = aaa;
     s.AgentAuth.KeyHeader = e("AGENT_AUTH_KEY_HEADER") ?? s.AgentAuth.KeyHeader;
+
+    if (bool.TryParse(e("CONNECTION_LOGGING_ENABLED"), out var cle)) s.ConnectionLogging.Enabled = cle;
 }
