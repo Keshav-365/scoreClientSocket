@@ -20,6 +20,7 @@ namespace Modal
         public UpdateScoreBatchSettings UpdateScoreBatch { get; set; } = new();
         public IdleShutdownSettings IdleShutdown { get; set; } = new();
         public ScorePollSettings ScorePoll { get; set; } = new();
+        public AgentAuthSettings AgentAuth { get; set; } = new();
     }
 
     public class SwaggerSettings
@@ -95,5 +96,15 @@ namespace Modal
         public int MinActiveInstances { get; set; } = 1;
         // Random extra wait (0..N s) before stopping, to de-sync simultaneous shutdowns across replicas.
         public int MaxJitterSeconds { get; set; } = 30;
+    }
+
+    // Gates AgentAuthFilter (agent key + per-agent IP whitelist), enforced on every
+    // /api/* call and the SignalR hub's negotiate/WebSocket-upgrade requests.
+    public class AgentAuthSettings
+    {
+        public bool isActive { get; set; } = true;
+        // Header name callers pass their agent key in. Query string "?key=" is always
+        // accepted too, since a browser's native WebSocket upgrade can't carry custom headers.
+        public string KeyHeader { get; set; } = "X-App";
     }
 }

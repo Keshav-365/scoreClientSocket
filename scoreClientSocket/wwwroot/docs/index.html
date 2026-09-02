@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>scoreClientSocket — Integration Reference</title>
+<meta name="description" content="REST + WebSocket integration reference for scoreClientSocket: authentication, endpoints, hub methods, and per-sport full-score / short-score field breakdowns." />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders:wght@600;700;800&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+  :root{
+    color-scheme: light dark;
+    --ground:#F5F8F6; --surface:#FFFFFF; --surface-alt:#EEF3EF;
+    --ink:#122019; --ink-muted:#52655D; --ink-faint:#859890;
+    --border:#DCE4DF; --border-strong:#C4D0C9;
+    --accent:#147A52; --accent-strong:#0F5F40; --accent-soft:#E4F3EC; --accent-ink:#FFFFFF;
+    --code-bg:#0E1B15; --code-ink:#BFEBD3; --code-ink-dim:#6E9683; --code-border:#1E3529;
+    --danger:#A93838; --danger-soft:#FBEAEA;
+    --warning:#8A5E10; --warning-soft:#FBF1DC;
+    --method-get:#235FA3; --method-get-soft:#E7EFF9;
+    --shadow: 0 1px 2px rgba(18,32,25,.04), 0 8px 24px -12px rgba(18,32,25,.12);
+    --font-display:'Big Shoulders', 'Arial Narrow', sans-serif;
+    --font-body:'IBM Plex Sans', -apple-system, 'Segoe UI', sans-serif;
+    --font-mono:'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --ground:#0B1512; --surface:#101C17; --surface-alt:#152220;
+      --ink:#E6F2EB; --ink-muted:#93A79C; --ink-faint:#5E7268;
+      --border:#213229; --border-strong:#2C4136;
+      --accent:#39CB8B; --accent-strong:#5EDDA3; --accent-soft:#123321; --accent-ink:#052013;
+      --code-bg:#060F0B; --code-ink:#8FE6B6; --code-ink-dim:#4C7561; --code-border:#1B3327;
+      --danger:#E58686; --danger-soft:#331A1B;
+      --warning:#DDB35B; --warning-soft:#302511;
+      --method-get:#79ADEE; --method-get-soft:#132235;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.55);
+    }
+  }
+  :root[data-theme="dark"]{
+    --ground:#0B1512; --surface:#101C17; --surface-alt:#152220;
+    --ink:#E6F2EB; --ink-muted:#93A79C; --ink-faint:#5E7268;
+    --border:#213229; --border-strong:#2C4136;
+    --accent:#39CB8B; --accent-strong:#5EDDA3; --accent-soft:#123321; --accent-ink:#052013;
+    --code-bg:#060F0B; --code-ink:#8FE6B6; --code-ink-dim:#4C7561; --code-border:#1B3327;
+    --danger:#E58686; --danger-soft:#331A1B;
+    --warning:#DDB35B; --warning-soft:#302511;
+    --method-get:#79ADEE; --method-get-soft:#132235;
+    --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -14px rgba(0,0,0,.55);
+  }
+
+  *{box-sizing:border-box;}
+  html,body{ height:100%; }
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--font-body); font-size:16px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  a{ color:var(--accent-strong); }
+  a:focus-visible, button:focus-visible, summary:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  h1,h2,h3,h4{ font-family:var(--font-display); font-weight:700; text-transform:uppercase; letter-spacing:.02em; text-wrap:balance; color:var(--ink); margin:0; }
+  code, pre, .mono{ font-family:var(--font-mono); }
+  .visually-hidden{ position:absolute; width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0); }
+
+  /* ---------- Shell layout ---------- */
+  .shell{ display:grid; grid-template-columns: 260px minmax(0,1fr); max-width:1240px; margin:0 auto; }
+  @media (max-width: 900px){ .shell{ grid-template-columns: 1fr; } .sidenav{ display:none; } }
+
+  .sidenav{
+    position:sticky; top:0; align-self:start; height:100vh; overflow-y:auto;
+    padding:28px 18px 40px 28px; border-right:1px solid var(--border);
+  }
+  .brand{ display:flex; align-items:baseline; gap:8px; margin-bottom:4px; }
+  .brand .mark{ width:10px;height:10px;border-radius:50%;background:var(--accent); box-shadow:0 0 0 3px var(--accent-soft); flex:none; }
+  .brand-name{ font-family:var(--font-mono); font-weight:600; font-size:.95rem; color:var(--ink); text-decoration:none; }
+  .brand-tag{ font-size:.75rem; color:var(--ink-muted); margin:0 0 22px; }
+
+  .navgroup{ margin-bottom:18px; }
+  .navgroup-label{ font-size:.68rem; letter-spacing:.09em; text-transform:uppercase; color:var(--ink-faint); font-weight:600; margin:0 0 6px; }
+  .navgroup a{
+    display:block; font-size:.87rem; color:var(--ink-muted); text-decoration:none;
+    padding:5px 8px; border-radius:6px; border-left:2px solid transparent;
+  }
+  .navgroup a:hover{ color:var(--ink); background:var(--surface-alt); }
+  .navgroup a.active{ color:var(--accent-strong); border-left-color:var(--accent); background:var(--accent-soft); font-weight:500; }
+
+  main{ padding: 28px 32px 100px; min-width:0; }
+  .content{ max-width:760px; }
+
+  /* ---------- Masthead ---------- */
+  .masthead{
+    display:flex; flex-direction:column; gap:16px; padding:26px 0 30px; border-bottom:1px solid var(--border); margin-bottom:36px;
+  }
+  .eyebrow{ font-size:.72rem; letter-spacing:.12em; text-transform:uppercase; color:var(--accent-strong); font-weight:600; }
+  .masthead h1{ font-size:clamp(2.1rem,4vw,2.8rem); line-height:1; }
+  .masthead p.lede{ font-family:var(--font-body); text-transform:none; letter-spacing:normal; font-weight:400; color:var(--ink-muted); font-size:1.02rem; max-width:60ch; margin:0; }
+  .pillrow{ display:flex; flex-wrap:wrap; gap:8px; }
+  .pill{
+    display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:.75rem;
+    padding:5px 10px; border-radius:999px; border:1px solid var(--border-strong); color:var(--ink-muted); background:var(--surface);
+  }
+  .pill .dot{ width:7px;height:7px;border-radius:50%; flex:none; }
+
+  /* ---------- Sections ---------- */
+  section{ scroll-margin-top:24px; margin-bottom:56px; }
+  section > h2{ font-size:1.55rem; margin-bottom:6px; }
+  .section-intro{ color:var(--ink-muted); max-width:66ch; margin:0 0 22px; font-size:.97rem; }
+  h3.sub{ font-family:var(--font-body); text-transform:none; letter-spacing:normal; font-weight:600; font-size:1.05rem; color:var(--ink); margin:28px 0 10px; }
+
+  /* ---------- Callouts ---------- */
+  .callout{ display:flex; gap:12px; padding:14px 16px; border-radius:10px; border:1px solid var(--border-strong); background:var(--surface); margin:18px 0; }
+  .callout .icon{ font-family:var(--font-mono); font-weight:600; flex:none; width:20px;height:20px; border-radius:5px; display:flex; align-items:center; justify-content:center; font-size:.75rem; }
+  .callout p{ margin:0; font-size:.92rem; color:var(--ink-muted); }
+  .callout strong{ color:var(--ink); }
+  .callout.warn{ background:var(--warning-soft); border-color: color-mix(in srgb, var(--warning) 35%, var(--border-strong)); }
+  .callout.warn .icon{ background:var(--warning); color:var(--surface); }
+  .callout.info{ background:var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 30%, var(--border-strong)); }
+  .callout.info .icon{ background:var(--accent); color:var(--accent-ink); }
+
+  /* ---------- Tables ---------- */
+  .table-wrap{ overflow-x:auto; border:1px solid var(--border); border-radius:10px; margin:14px 0 6px; background:var(--surface); }
+  table{ border-collapse:collapse; width:100%; font-size:.87rem; min-width:420px; }
+  thead th{
+    text-align:left; font-family:var(--font-mono); font-size:.7rem; letter-spacing:.06em; text-transform:uppercase;
+    color:var(--ink-faint); padding:9px 14px; border-bottom:1px solid var(--border); background:var(--surface-alt); white-space:nowrap;
+  }
+  tbody td{ padding:9px 14px; border-bottom:1px solid var(--border); vertical-align:top; color:var(--ink-muted); }
+  tbody tr:last-child td{ border-bottom:none; }
+  td code, td .fld{ font-family:var(--font-mono); font-size:.84rem; color:var(--ink); background:var(--surface-alt); padding:1px 5px; border-radius:4px; }
+  td.meaning{ color:var(--ink); }
+  .num{ font-variant-numeric: tabular-nums; }
+
+  /* ---------- Sport dots ---------- */
+  .sport{ display:inline-flex; align-items:center; gap:7px; white-space:nowrap; }
+  .sport .dot{ width:8px;height:8px;border-radius:50%; flex:none; box-shadow:0 0 0 1px rgba(0,0,0,.08); }
+  .sport.soccer .dot{ background:#3FA34D; }
+  .sport.tennis .dot{ background:#C4D62E; }
+  .sport.cricket .dot{ background:#B23B3B; }
+  .sport.golf .dot{ background:#D8DEDA; box-shadow:0 0 0 1px var(--border-strong); }
+
+  /* ---------- Endpoint cards ---------- */
+  .endpoint{ border:1px solid var(--border); border-radius:12px; background:var(--surface); margin:16px 0 26px; box-shadow:var(--shadow); overflow:hidden; }
+  .endpoint-head{ display:flex; align-items:center; gap:10px; padding:14px 16px; border-bottom:1px solid var(--border); flex-wrap:wrap; }
+  .method{ font-family:var(--font-mono); font-weight:600; font-size:.72rem; letter-spacing:.04em; padding:3px 8px; border-radius:5px; background:var(--method-get-soft); color:var(--method-get); flex:none; }
+  .path{ font-family:var(--font-mono); font-size:.92rem; color:var(--ink); }
+  .endpoint-desc{ margin-left:auto; font-size:.82rem; color:var(--ink-muted); }
+  .endpoint-body{ padding:16px; display:flex; flex-direction:column; gap:14px; }
+  .endpoint-body .table-wrap{ margin:0; }
+  .label-sm{ font-family:var(--font-mono); font-size:.68rem; letter-spacing:.08em; text-transform:uppercase; color:var(--ink-faint); margin:0 0 6px; }
+
+  /* ---------- Code blocks ---------- */
+  pre{
+    margin:0; background:var(--code-bg); color:var(--code-ink); border:1px solid var(--code-border);
+    border-radius:10px; padding:14px 16px; overflow-x:auto; font-size:.82rem; line-height:1.6;
+  }
+  pre .k{ color:var(--code-ink-dim); }
+  code.inline{ font-family:var(--font-mono); background:var(--surface-alt); border:1px solid var(--border); padding:1px 6px; border-radius:5px; font-size:.85em; }
+
+  /* ---------- Status chips ---------- */
+  .status{ display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:.78rem; font-weight:600; padding:2px 8px; border-radius:5px; }
+  .status.ok{ background:var(--accent-soft); color:var(--accent-strong); }
+  .status.err{ background:var(--danger-soft); color:var(--danger); }
+
+  /* ---------- Checklist ---------- */
+  .checklist{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; counter-reset:step; }
+  .checklist li{ display:flex; gap:12px; padding:12px 14px; border:1px solid var(--border); border-radius:10px; background:var(--surface); }
+  .checklist li::before{ counter-increment:step; content: counter(step); font-family:var(--font-mono); font-weight:600; font-size:.78rem; color:var(--accent-ink); background:var(--accent); width:22px;height:22px;border-radius:50%; display:flex; align-items:center; justify-content:center; flex:none; }
+  .checklist span{ font-size:.93rem; color:var(--ink-muted); padding-top:2px; }
+  .checklist code.inline{ color:var(--ink); }
+
+  footer{ margin-top:70px; padding-top:22px; border-top:1px solid var(--border); color:var(--ink-faint); font-size:.8rem; }
+
+  @media (prefers-reduced-motion: reduce){ * { scroll-behavior:auto !important; } }
+  html{ scroll-behavior:smooth; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <nav class="sidenav" aria-label="Sections">
+    <a class="brand" href="#top" style="text-decoration:none;"><span class="mark" aria-hidden="true"></span><span class="brand-name">scoreClientSocket</span></a>
+    <p class="brand-tag">Third-party integration reference</p>
+
+    <div class="navgroup">
+      <p class="navgroup-label">Start here</p>
+      <a href="#auth">Authentication</a>
+    </div>
+    <div class="navgroup">
+      <p class="navgroup-label">REST API</p>
+      <a href="#rest-scorecard">Scorecard &amp; iframe</a>
+      <a href="#rest-ops">Operational</a>
+    </div>
+    <div class="navgroup">
+      <p class="navgroup-label">Realtime socket</p>
+      <a href="#connecting">Connecting</a>
+      <a href="#hub-methods">Hub methods &amp; events</a>
+      <a href="#heartbeat">Heartbeat &amp; reconnect</a>
+    </div>
+    <div class="navgroup">
+      <p class="navgroup-label">Score payloads</p>
+      <a href="#wire-format">Wire format</a>
+      <a href="#fullscore">Full score fields</a>
+      <a href="#shortscore">Short score fields</a>
+      <a href="#samples">Sample payloads</a>
+    </div>
+    <div class="navgroup">
+      <p class="navgroup-label">&nbsp;</p>
+      <a href="#quickstart">Quick-start checklist</a>
+    </div>
+  </nav>
+
+  <main>
+    <div class="content" id="top">
+
+      <header class="masthead">
+        <p class="eyebrow">Integration reference · v1</p>
+        <h1>scoreClientSocket</h1>
+        <p class="lede">The public edge of the live-score platform. Third-party integrators connect here — never directly to the internal provider — for scorecard/iframe lookups over REST and live push updates over a SignalR socket.</p>
+        <div class="pillrow">
+          <span class="pill"><span class="dot" style="background:var(--accent)"></span>Agent key required</span>
+          <span class="pill">5 req/s per IP</span>
+          <span class="pill">REST + WebSocket</span>
+          <span class="pill sport soccer"><span class="dot"></span>Soccer</span>
+          <span class="pill sport tennis"><span class="dot"></span>Tennis</span>
+          <span class="pill sport cricket"><span class="dot"></span>Cricket</span>
+          <span class="pill sport golf"><span class="dot"></span>Golf</span>
+        </div>
+      </header>
+
+      <!-- ===================== AUTH ===================== -->
+      <section id="auth">
+        <h2>Authentication</h2>
+        <p class="section-intro">Every request — REST or socket — needs a valid, unexpired <strong style="color:var(--ink)">agent key</strong>. Ask the platform owner for one; each key can optionally be locked to specific caller IPs.</p>
+
+        <h3 class="sub">How to send it</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Call type</th><th>Transport</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>REST API</td><td class="meaning">HTTP header <code class="fld">X-App</code></td><td><code class="fld">X-App: &lt;your-key&gt;</code></td></tr>
+            <tr><td>REST API (alt.)</td><td class="meaning">Query string</td><td><code class="fld">?key=&lt;your-key&gt;</code></td></tr>
+            <tr><td>Socket connection</td><td class="meaning">Query string on the hub URL — <strong style="color:var(--ink)">required</strong>, headers don't reach it</td><td><code class="fld">wss://host/clientScore?key=&lt;your-key&gt;</code></td></tr>
+          </tbody>
+        </table></div>
+
+        <div class="callout warn">
+          <span class="icon" aria-hidden="true">!</span>
+          <p>The socket needs the query string because a browser's native WebSocket upgrade can't carry custom headers — only the initial SignalR "negotiate" call could use one, and the upgrade after it would then fail auth. <code class="inline">?key=</code> works for both legs.</p>
+        </div>
+
+        <h3 class="sub">Failure responses</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Status</th><th>Message</th><th>Cause</th></tr></thead>
+          <tbody>
+            <tr><td><span class="status err">401</span></td><td><code class="fld">Agent key required.</code></td><td class="meaning">No key present, header or query string</td></tr>
+            <tr><td><span class="status err">401</span></td><td><code class="fld">Invalid agent key.</code></td><td class="meaning">Key doesn't match any configured agent</td></tr>
+            <tr><td><span class="status err">401</span></td><td><code class="fld">Agent '&lt;name&gt;' key has expired on &lt;date&gt;.</code></td><td class="meaning">Past the key's expiry date</td></tr>
+            <tr><td><span class="status err">403</span></td><td><code class="fld">IP '&lt;ip&gt;' is not whitelisted for agent '&lt;name&gt;'.</code></td><td class="meaning">Key has an IP allowlist and yours isn't on it</td></tr>
+          </tbody>
+        </table></div>
+
+        <p class="label-sm" style="margin-top:16px;">Rejection body shape</p>
+        <pre><code>{ <span class="k">"success"</span>: false, <span class="k">"data"</span>: null, <span class="k">"message"</span>: <span class="k">"..."</span>, <span class="k">"status"</span>: 401 }</code></pre>
+
+        <div class="callout info">
+          <span class="icon" aria-hidden="true">i</span>
+          <p>Testing in Swagger? Click <strong style="color:var(--ink)">Authorize</strong> and paste your key once — it's attached to every "Try it out" call automatically.</p>
+        </div>
+      </section>
+
+      <!-- ===================== REST ===================== -->
+      <section id="rest-scorecard">
+        <h2>REST API</h2>
+        <p class="section-intro">All routes are prefixed with <code class="inline">/api</code>. Every route below shares the auth rules above, a 5 req/s per-IP rate limit, and open CORS unless the deployment restricts it.</p>
+
+        <h3 class="sub" id="rest-scorecard-h">Scorecard &amp; iframe</h3>
+
+        <div class="endpoint">
+          <div class="endpoint-head"><span class="method">GET</span><span class="path">/api/Scorecard</span><span class="endpoint-desc">alias <code class="inline">/api/bfrateScoreborad</code></span></div>
+          <div class="endpoint-body">
+            <p style="margin:0;font-size:.9rem;color:var(--ink-muted);">Cached scorecard widget URL for an event.</p>
+            <div>
+              <p class="label-sm">Query params</p>
+              <div class="table-wrap"><table>
+                <thead><tr><th>Param</th><th>Type</th><th>Required</th><th>Notes</th></tr></thead>
+                <tbody>
+                  <tr><td><code class="fld">eventId</code></td><td>string</td><td>yes</td><td class="meaning">—</td></tr>
+                  <tr><td><code class="fld">link</code></td><td>int</td><td>no · default 0</td><td class="meaning">scorecard variant/link id</td></tr>
+                  <tr><td><code class="fld">pid</code></td><td>int</td><td>no · default 0</td><td class="meaning">provider id</td></tr>
+                  <tr><td><code class="fld">color</code></td><td>string</td><td>no</td><td class="meaning">appended to the URL as <code class="fld">&amp;color=</code></td></tr>
+                  <tr><td><code class="fld">font</code></td><td>string</td><td>no</td><td class="meaning">appended to the URL as <code class="fld">&amp;font=</code></td></tr>
+                </tbody>
+              </table></div>
+            </div>
+            <div>
+              <p class="label-sm">Response</p>
+              <pre><code>{
+  <span class="k">"EventID"</span>: 12345,
+  <span class="k">"scoreUrl"</span>: <span class="k">"https://.../scoreboard?id=12345&color=000000"</span>,
+  <span class="k">"streamingUrl"</span>: <span class="k">"https://..."</span>
+}</code></pre>
+            </div>
+          </div>
+        </div>
+
+      </section>
+
+      <section id="rest-ops">
+        <h3 class="sub">Operational</h3>
+        <p style="font-size:.9rem;color:var(--ink-muted);margin:0 0 10px;">Monitoring endpoints — connection counts, daily stats, instance lifecycle. Not needed for a typical score integration.</p>
+        <div class="pillrow">
+          <span class="pill">GET /api/ConnectionCount</span>
+          <span class="pill">GET /api/ConnectionStats</span>
+          <span class="pill">GET /api/InstanceStats</span>
+          <span class="pill">GET /api/ip <span style="opacity:.6">(diagnostic)</span></span>
+        </div>
+      </section>
+
+      <!-- ===================== SOCKET ===================== -->
+      <section id="connecting">
+        <h2>Real-time socket</h2>
+        <p class="section-intro">A SignalR hub at <code class="inline">/clientScore</code> pushes score updates the moment they change — no polling needed on your side.</p>
+
+        <p class="label-sm">Connect</p>
+        <pre><code><span class="k">const</span> connection = <span class="k">new</span> signalR.HubConnectionBuilder()
+  .withUrl(<span class="k">`wss://&lt;host&gt;/clientScore?key=${AGENT_KEY}`</span>)
+  .withAutomaticReconnect()
+  .build();
+
+connection.on(<span class="k">'Score'</span>, (fullScore) =&gt; { <span class="k">/* §Score payloads */</span> });
+connection.on(<span class="k">'ShortScore'</span>, (shortScore) =&gt; { <span class="k">/* §Score payloads */</span> });
+
+<span class="k">await</span> connection.start();
+connection.invoke(<span class="k">'getscore'</span>, <span class="k">'30123456'</span>);
+connection.invoke(<span class="k">'getShortScore'</span>, <span class="k">'30123456'</span>);</code></pre>
+      </section>
+
+      <section id="hub-methods">
+        <h3 class="sub">Client → server methods</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Method</th><th>Args</th><th>Effect</th></tr></thead>
+          <tbody>
+            <tr><td><code class="fld">getscore</code></td><td><code class="fld">"123,456"</code></td><td class="meaning">Subscribe to full-score updates. Sends the cached <code class="inline">Score</code> immediately if present, then every future update.</td></tr>
+            <tr><td><code class="fld">disconnectscore</code></td><td>event id(s)</td><td class="meaning">Unsubscribe from full-score updates.</td></tr>
+            <tr><td><code class="fld">getShortScore</code></td><td>event id(s)</td><td class="meaning">Same as <code class="inline">getscore</code>, for the <code class="inline">ShortScore</code> stream.</td></tr>
+            <tr><td><code class="fld">disconnectShortScore</code></td><td>event id(s)</td><td class="meaning">Unsubscribe from short-score updates.</td></tr>
+            <tr><td><code class="fld">getupdateScore</code></td><td>event id(s)</td><td class="meaning"><strong style="color:var(--ink)">Heartbeat</strong> — keeps the event active server-side. See below.</td></tr>
+            <tr><td><code class="fld">Ping</code></td><td>none</td><td class="meaning">Replies with <code class="inline">Pong</code>. Liveness check.</td></tr>
+          </tbody>
+        </table></div>
+
+        <h3 class="sub">Server → client events</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Event</th><th>Payload</th><th>When</th></tr></thead>
+          <tbody>
+            <tr><td><code class="fld">Score</code></td><td class="meaning">full score object</td><td class="meaning">On <code class="inline">getscore</code> (cache hit), then every live update</td></tr>
+            <tr><td><code class="fld">ShortScore</code></td><td class="meaning">short score object</td><td class="meaning">On <code class="inline">getShortScore</code> (cache hit), then every live update</td></tr>
+            <tr><td><code class="fld">Pong</code></td><td class="meaning">none</td><td class="meaning">Reply to your <code class="inline">Ping</code></td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="heartbeat">
+        <h3 class="sub">Heartbeat &amp; reconnection</h3>
+        <div class="callout warn">
+          <span class="icon" aria-hidden="true">!</span>
+          <p><strong>Call <code class="inline">getupdateScore</code> on an interval well under 90 seconds</strong> for every event you're watching. The server only keeps polling events with recent client interest — an event goes idle 90s after its last <code class="inline">getscore</code>/<code class="inline">getupdateScore</code>/<code class="inline">getShortScore</code> call. score-webapp uses a 15s interval.</p>
+        </div>
+        <p style="font-size:.9rem;color:var(--ink-muted);">Use <code class="inline">.withAutomaticReconnect()</code>. Subscriptions are per-connection — on reconnect, re-issue <code class="inline">getscore</code>/<code class="inline">getShortScore</code> for every event you still care about. There's no explicit "connected" event; a resolved <code class="inline">connection.start()</code> is your signal.</p>
+      </section>
+
+      <!-- ===================== SCORE PAYLOADS ===================== -->
+      <section id="wire-format">
+        <h2>Score payloads</h2>
+        <p class="section-intro"><code class="inline">scoredata</code> (the <code class="inline">Score</code> event) and <code class="inline">shortscoredata</code> (<code class="inline">ShortScore</code>) are relayed byte-for-byte from the upstream provider.</p>
+
+        <div class="callout warn">
+          <span class="icon" aria-hidden="true">!</span>
+          <p><strong>Keys are abbreviated, not the "nice" names.</strong> The live socket push serializes raw C# member names — <code class="inline">na</code>, <code class="inline">sc</code>, <code class="inline">hts</code>, <code class="inline">eid</code>, <code class="inline">etid</code>, <code class="inline">gsq</code>, <code class="inline">isrv</code> — never the expanded <code class="inline">name</code> / <code class="inline">score</code> / <code class="inline">halfTimeScore</code> aliases you might expect from a Betfair-flavored API. The tables below are your field glossary.</p>
+        </div>
+
+        <h3 class="sub"><code class="inline">eventTypeId</code> (<code class="inline">etid</code> / <code class="inline">eti</code>) → sport</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Value</th><th>Sport</th></tr></thead>
+          <tbody>
+            <tr><td class="num">1</td><td><span class="sport soccer"><span class="dot"></span>Soccer</span></td></tr>
+            <tr><td class="num">2</td><td><span class="sport tennis"><span class="dot"></span>Tennis</span></td></tr>
+            <tr><td class="num">3</td><td><span class="sport golf"><span class="dot"></span>Golf</span></td></tr>
+            <tr><td class="num">4</td><td><span class="sport cricket"><span class="dot"></span>Cricket</span></td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section id="fullscore">
+        <h3 class="sub"><code class="inline">Score</code> event — base fields</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code class="fld">etid</code></td><td>int</td><td class="meaning">event type id (sport)</td></tr>
+            <tr><td><code class="fld">eid</code></td><td>int</td><td class="meaning">event id</td></tr>
+            <tr><td><code class="fld">sc</code></td><td>object</td><td class="meaning">score object — <code class="inline">sc.hm</code> home, <code class="inline">sc.aw</code> away (table below)</td></tr>
+            <tr><td><code class="fld">st</code></td><td>string</td><td class="meaning">status</td></tr>
+            <tr><td><code class="fld">ms</code></td><td>string</td><td class="meaning">match status</td></tr>
+            <tr><td><code class="fld">te</code></td><td>int</td><td class="meaning"><span class="sport soccer"><span class="dot"></span>Soccer</span> match clock, seconds</td></tr>
+            <tr><td><code class="fld">ert</code></td><td>int</td><td class="meaning"><span class="sport soccer"><span class="dot"></span>Soccer</span> elapsed regular time</td></tr>
+            <tr><td><code class="fld">fte</code></td><td>object</td><td class="meaning"><code class="inline">{ h, m, s }</code> full time elapsed</td></tr>
+            <tr><td><code class="fld">cset</code></td><td>int</td><td class="meaning"><span class="sport tennis"><span class="dot"></span>Tennis</span> current set number</td></tr>
+            <tr><td><code class="fld">hs</code></td><td>bool</td><td class="meaning"><span class="sport tennis"><span class="dot"></span>Tennis</span> "has sets" flag</td></tr>
+            <tr><td><code class="fld">ud</code></td><td>array</td><td class="meaning">update log: <code class="inline">{ut, uid, mt, ert, ty, uty, team, tname}</code></td></tr>
+          </tbody>
+        </table></div>
+
+        <h3 class="sub"><code class="inline">sc.hm</code> / <code class="inline">sc.aw</code> — per side</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Field</th><th>Type</th><th>Meaning</th><th>Sport</th></tr></thead>
+          <tbody>
+            <tr><td><code class="fld">na</code></td><td>string</td><td class="meaning">name</td><td>all</td></tr>
+            <tr><td><code class="fld">sc</code></td><td>string</td><td class="meaning">score (goals / points)</td><td>all</td></tr>
+            <tr><td><code class="fld">hts</code></td><td>string</td><td class="meaning">half-time score</td><td><span class="sport soccer"><span class="dot"></span>Soccer</span></td></tr>
+            <tr><td><code class="fld">ftc</code></td><td>string</td><td class="meaning">full-time score</td><td><span class="sport soccer"><span class="dot"></span>Soccer</span></td></tr>
+            <tr><td><code class="fld">pes</code> / <code class="fld">peseq</code></td><td>string / array</td><td class="meaning">penalties score / sequence (omitted when empty)</td><td><span class="sport soccer"><span class="dot"></span>Soccer</span></td></tr>
+            <tr><td><code class="fld">games</code> / <code class="fld">sets</code></td><td>string</td><td class="meaning">games in set / sets won</td><td><span class="sport tennis"><span class="dot"></span>Tennis</span></td></tr>
+            <tr><td><code class="fld">gsq</code></td><td>array&lt;string&gt;</td><td class="meaning">point-by-point game sequence</td><td><span class="sport tennis"><span class="dot"></span>Tennis</span></td></tr>
+            <tr><td><code class="fld">isrv</code></td><td>bool?</td><td class="meaning">currently serving</td><td><span class="sport tennis"><span class="dot"></span>Tennis</span></td></tr>
+            <tr><td><code class="fld">sbr</code></td><td>int?</td><td class="meaning">service breaks</td><td><span class="sport tennis"><span class="dot"></span>Tennis</span></td></tr>
+            <tr><td><code class="fld">nyfc</code> / <code class="fld">nrfc</code> / <code class="fld">nfc</code></td><td>int</td><td class="meaning">yellow / red / total cards (omitted at 0)</td><td><span class="sport soccer"><span class="dot"></span>Soccer</span></td></tr>
+            <tr><td><code class="fld">nfco</code> / <code class="fld">nfcofh</code> / <code class="fld">nfcosh</code></td><td>int</td><td class="meaning">corners — total / 1st half / 2nd half (omitted at 0)</td><td><span class="sport soccer"><span class="dot"></span>Soccer</span></td></tr>
+            <tr><td><code class="fld">bp</code></td><td>int</td><td class="meaning">booking points (omitted at 0)</td><td><span class="sport soccer"><span class="dot"></span>Soccer</span></td></tr>
+            <tr><td><code class="fld">in1</code> / <code class="fld">in2</code></td><td>object</td><td class="meaning"><code class="inline">{rn, wi, ov}</code> runs/wickets/overs, innings 1 &amp; 2</td><td><span class="sport cricket"><span class="dot"></span>Cricket <span style="color:var(--ink-faint)">†</span></span></td></tr>
+          </tbody>
+        </table></div>
+
+        <div class="callout warn">
+          <span class="icon" aria-hidden="true">!</span>
+          <p><strong>† Cricket doesn't get a <code class="inline">Score</code> event today.</strong> The model has cricket fields, but the live pipeline never populates or broadcasts <code class="inline">Score</code> for cricket — that sport's data arrives through a separate feed that only produces <code class="inline">ShortScore</code>. If you're integrating cricket, subscribe to <code class="inline">ShortScore</code> only.</p>
+        </div>
+      </section>
+
+      <section id="shortscore">
+        <h3 class="sub"><code class="inline">ShortScore</code> event — fields</h3>
+        <p style="font-size:.85rem;color:var(--ink-muted);margin:0 0 4px;">No key aliasing here — these are the actual wire names.</p>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Field</th><th>Type</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td><code class="fld">eti</code></td><td>int</td><td class="meaning">event type id (sport)</td></tr>
+            <tr><td><code class="fld">eid</code></td><td>string</td><td class="meaning">event id</td></tr>
+            <tr><td><code class="fld">en</code></td><td>string</td><td class="meaning">event name, e.g. <code class="inline">"Team A v Team B"</code></td></tr>
+            <tr><td><code class="fld">te1n</code> / <code class="fld">te2n</code></td><td>string</td><td class="meaning">team/player 1 &amp; 2 names</td></tr>
+            <tr><td><code class="fld">t1s</code> / <code class="fld">t2s</code></td><td>string</td><td class="meaning">team/player 1 &amp; 2 scores</td></tr>
+            <tr><td><code class="fld">pt</code></td><td>int</td><td class="meaning">period/time — meaning depends on sport (omitted at 0)</td></tr>
+            <tr><td><code class="fld">t1set</code> / <code class="fld">t2set</code></td><td>string</td><td class="meaning">sets won <span class="sport tennis"><span class="dot"></span>Tennis</span></td></tr>
+            <tr><td><code class="fld">t1p</code> / <code class="fld">t2p</code></td><td>string</td><td class="meaning">points/games <span class="sport tennis"><span class="dot"></span>Tennis</span></td></tr>
+            <tr><td><code class="fld">currBatting</code></td><td>string</td><td class="meaning">team currently batting <span class="sport cricket"><span class="dot"></span>Cricket</span></td></tr>
+            <tr><td><code class="fld">currBattingTeamScore</code></td><td>string</td><td class="meaning">batting team's current score <span class="sport cricket"><span class="dot"></span>Cricket</span></td></tr>
+          </tbody>
+        </table></div>
+
+        <h3 class="sub">Per sport</h3>
+        <div class="table-wrap"><table>
+          <thead><tr><th>Sport</th><th><code class="fld">t1s</code>/<code class="fld">t2s</code></th><th><code class="fld">pt</code></th><th>Sets/points</th><th><code class="fld">currBatting*</code></th><th>Source</th></tr></thead>
+          <tbody>
+            <tr><td><span class="sport soccer"><span class="dot"></span>Soccer</span></td><td class="meaning">goals</td><td class="meaning">match clock (s)</td><td class="meaning">—</td><td class="meaning">—</td><td class="meaning">derived from <code class="inline">Score</code></td></tr>
+            <tr><td><span class="sport tennis"><span class="dot"></span>Tennis</span></td><td class="meaning">games in set</td><td class="meaning">current set #</td><td class="meaning">set</td><td class="meaning">—</td><td class="meaning">derived from <code class="inline">Score</code></td></tr>
+            <tr><td><span class="sport cricket"><span class="dot"></span>Cricket</span></td><td class="meaning">not populated this way</td><td class="meaning">—</td><td class="meaning">—</td><td class="meaning">populated</td><td class="meaning">independent live feed</td></tr>
+            <tr><td><span class="sport golf"><span class="dot"></span>Golf</span></td><td class="meaning">—</td><td class="meaning">—</td><td class="meaning">—</td><td class="meaning">—</td><td class="meaning">no short score produced</td></tr>
+          </tbody>
+        </table></div>
+        <p style="font-size:.85rem;color:var(--ink-muted);">Soccer and tennis short scores are a summarized view of the same <code class="inline">Score</code> payload. Cricket short scores come from an independent feed whose messages already arrive pre-shaped this way — which is why <code class="inline">currBatting*</code> is only ever populated there.</p>
+      </section>
+
+      <section id="samples">
+        <h3 class="sub">Sample payloads</h3>
+
+        <p class="label-sm"><span class="sport soccer"><span class="dot"></span>Soccer</span> — Score</p>
+        <pre><code>{
+  <span class="k">"etid"</span>: 1, <span class="k">"eid"</span>: 30123456, <span class="k">"st"</span>: <span class="k">"IN_PLAY"</span>, <span class="k">"ms"</span>: <span class="k">"1st Half"</span>, <span class="k">"te"</span>: 1523, <span class="k">"ert"</span>: 1523,
+  <span class="k">"fte"</span>: { <span class="k">"h"</span>: 0, <span class="k">"m"</span>: 25, <span class="k">"s"</span>: 23 },
+  <span class="k">"sc"</span>: {
+    <span class="k">"hm"</span>: { <span class="k">"na"</span>: <span class="k">"Team A"</span>, <span class="k">"sc"</span>: <span class="k">"1"</span>, <span class="k">"hts"</span>: <span class="k">"0"</span>, <span class="k">"ftc"</span>: <span class="k">"0"</span>, <span class="k">"nyfc"</span>: 2, <span class="k">"nfco"</span>: 3 },
+    <span class="k">"aw"</span>: { <span class="k">"na"</span>: <span class="k">"Team B"</span>, <span class="k">"sc"</span>: <span class="k">"0"</span>, <span class="k">"hts"</span>: <span class="k">"0"</span>, <span class="k">"ftc"</span>: <span class="k">"0"</span> }
+  }
+}</code></pre>
+
+        <p class="label-sm" style="margin-top:16px;"><span class="sport soccer"><span class="dot"></span>Soccer</span> — ShortScore</p>
+        <pre><code>{ <span class="k">"eti"</span>: 1, <span class="k">"eid"</span>: <span class="k">"30123456"</span>, <span class="k">"en"</span>: <span class="k">"Team A v Team B"</span>, <span class="k">"te1n"</span>: <span class="k">"Team A"</span>, <span class="k">"te2n"</span>: <span class="k">"Team B"</span>, <span class="k">"t1s"</span>: <span class="k">"1"</span>, <span class="k">"t2s"</span>: <span class="k">"0"</span>, <span class="k">"pt"</span>: 1523 }</code></pre>
+
+        <p class="label-sm" style="margin-top:16px;"><span class="sport tennis"><span class="dot"></span>Tennis</span> — Score</p>
+        <pre><code>{
+  <span class="k">"etid"</span>: 2, <span class="k">"eid"</span>: 30234567, <span class="k">"cset"</span>: 2, <span class="k">"hs"</span>: true,
+  <span class="k">"sc"</span>: {
+    <span class="k">"hm"</span>: { <span class="k">"na"</span>: <span class="k">"Player A"</span>, <span class="k">"sc"</span>: <span class="k">"30"</span>, <span class="k">"games"</span>: <span class="k">"3"</span>, <span class="k">"sets"</span>: <span class="k">"1"</span>, <span class="k">"isrv"</span>: true, <span class="k">"gsq"</span>: [<span class="k">"15-0"</span>,<span class="k">"15-15"</span>,<span class="k">"30-15"</span>] },
+    <span class="k">"aw"</span>: { <span class="k">"na"</span>: <span class="k">"Player B"</span>, <span class="k">"sc"</span>: <span class="k">"15"</span>, <span class="k">"games"</span>: <span class="k">"2"</span>, <span class="k">"sets"</span>: <span class="k">"0"</span>, <span class="k">"isrv"</span>: false }
+  }
+}</code></pre>
+
+        <p class="label-sm" style="margin-top:16px;"><span class="sport tennis"><span class="dot"></span>Tennis</span> — ShortScore</p>
+        <pre><code>{ <span class="k">"eti"</span>: 2, <span class="k">"eid"</span>: <span class="k">"30234567"</span>, <span class="k">"en"</span>: <span class="k">"Player A v Player B"</span>, <span class="k">"te1n"</span>: <span class="k">"Player A"</span>, <span class="k">"te2n"</span>: <span class="k">"Player B"</span>, <span class="k">"t1s"</span>: <span class="k">"3"</span>, <span class="k">"t2s"</span>: <span class="k">"2"</span>, <span class="k">"pt"</span>: 2, <span class="k">"t1set"</span>: <span class="k">"1"</span>, <span class="k">"t2set"</span>: <span class="k">"0"</span>, <span class="k">"t1p"</span>: <span class="k">"30"</span>, <span class="k">"t2p"</span>: <span class="k">"15"</span> }</code></pre>
+
+        <p class="label-sm" style="margin-top:16px;"><span class="sport cricket"><span class="dot"></span>Cricket</span> — ShortScore <span style="color:var(--ink-faint);text-transform:none;letter-spacing:normal;">(values illustrative — exact shape is whatever the feed sends)</span></p>
+        <pre><code>{ <span class="k">"eti"</span>: 4, <span class="k">"eid"</span>: <span class="k">"30345678"</span>, <span class="k">"en"</span>: <span class="k">"Team A v Team B"</span>, <span class="k">"te1n"</span>: <span class="k">"Team A"</span>, <span class="k">"te2n"</span>: <span class="k">"Team B"</span>, <span class="k">"t1s"</span>: <span class="k">"156/4 (18.2)"</span>, <span class="k">"t2s"</span>: <span class="k">""</span>, <span class="k">"currBatting"</span>: <span class="k">"Team A"</span>, <span class="k">"currBattingTeamScore"</span>: <span class="k">"156/4"</span> }</code></pre>
+        <p style="font-size:.85rem;color:var(--ink-muted);">No <code class="inline">Score</code> event for cricket — see the callout above.</p>
+      </section>
+
+      <!-- ===================== QUICKSTART ===================== -->
+      <section id="quickstart">
+        <h2>Quick-start checklist</h2>
+        <ol class="checklist">
+          <li><span>Get an agent key — and if you need IP restriction, share the IPs your backend calls from.</span></li>
+          <li><span>REST: send <code class="inline">X-App: &lt;key&gt;</code> (or <code class="inline">?key=</code>) on every <code class="inline">/api/*</code> call.</span></li>
+          <li><span>Socket: connect to <code class="inline">wss://&lt;host&gt;/clientScore?key=&lt;key&gt;</code>.</span></li>
+          <li><span>Call <code class="inline">getscore</code> and/or <code class="inline">getShortScore</code> for each event you want.</span></li>
+          <li><span>Re-call <code class="inline">getupdateScore</code> at least every ~60–90s per event to keep it active.</span></li>
+          <li><span>Handle <code class="inline">Score</code>/<code class="inline">ShortScore</code> — remember cricket only ever sends <code class="inline">ShortScore</code>.</span></li>
+          <li><span>On reconnect, re-subscribe — the server doesn't remember your subscriptions across a dropped connection.</span></li>
+        </ol>
+      </section>
+
+      <footer>scoreClientSocket integration reference · generated from the live source, not a spec written ahead of it.</footer>
+    </div>
+  </main>
+</div>
+
+<script>
+  (function(){
+    var links = Array.prototype.slice.call(document.querySelectorAll('.navgroup a'));
+    var sections = links.map(function(a){ return document.querySelector(a.getAttribute('href')); }).filter(Boolean);
+    if (!('IntersectionObserver' in window) || sections.length === 0) return;
+    var byId = {};
+    links.forEach(function(a){ byId[a.getAttribute('href').slice(1)] = a; });
+    var observer = new IntersectionObserver(function(entries){
+      entries.forEach(function(entry){
+        var link = byId[entry.target.id];
+        if (!link) return;
+        if (entry.isIntersecting) {
+          links.forEach(function(l){ l.classList.remove('active'); });
+          link.classList.add('active');
+        }
+      });
+    }, { rootMargin: '-15% 0px -70% 0px', threshold: 0 });
+    sections.forEach(function(s){ observer.observe(s); });
+  })();
+</script>
+</body>
+</html>

@@ -62,6 +62,10 @@ configuration.GetSection("Hubettings").Bind(appSettings.HubSettings);
 ApplyEnvOverrides(appSettings);
 AppCache.Settings = appSettings;
 
+// Agent keys + per-agent IP whitelists, checked by AgentAuthFilter.
+var agents = configuration.GetSection("Agents").Get<List<Modal.Cache.AgentConfig>>();
+AppCache.Agents = agents ?? new List<Modal.Cache.AgentConfig>();
+
 
 bool enableSwagger = appSettings.SwaggerSettings.EnableSwagger;//Convert.ToBoolean(configuration["SwaggerSettings:EnableSwagger"].ToString());
 string developmentVersion = "v" + AppCache.Settings.DevelopmentVersion;// configuration["DevelopmentVersion"].ToString();
@@ -71,6 +75,35 @@ if (enableSwagger)
     builder.Services.AddSwaggerGen(c =>
     {
         c.SwaggerDoc(developmentVersion, new OpenApiInfo { Title = strProject, Version = developmentVersion });
+
+        // When AgentAuthFilter is enforcing keys, give Swagger UI an "Authorize" button so the
+        // key gets attached to every "Try it out" call instead of failing with 401.
+        if (AppCache.Settings.AgentAuth.isActive)
+        {
+            string keyHeader = string.IsNullOrEmpty(AppCache.Settings.AgentAuth.KeyHeader)
+                ? "X-App"
+                : AppCache.Settings.AgentAuth.KeyHeader;
+
+            c.AddSecurityDefinition("agentKey", new OpenApiSecurityScheme
+            {
+                Name = keyHeader,
+                Type = SecuritySchemeType.ApiKey,
+                In = ParameterLocation.Header,
+                Description = "Agent key required by AgentAuthFilter (see appsettings.json Agents)."
+            });
+
+            var securityRequirement = new OpenApiSecurityRequirement
+            {
+                {
+                    new OpenApiSecurityScheme
+                    {
+                        Reference = new OpenApiReference { Type = ReferenceType.SecurityScheme, Id = "agentKey" }
+                    },
+                    new string[] { }
+                }
+            };
+            c.AddSecurityRequirement(securityRequirement);
+        }
     });
 }
 
@@ -201,6 +234,11 @@ app.UseCookiePolicy();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+// Agent key + per-agent IP whitelist check. Runs after static files (wwwroot stays public)
+// and before endpoint routing, so it covers both /api/* controller calls and the SignalR
+// hub's negotiate/WebSocket-upgrade requests.
+app.UseAgentAuthFilter();
+
 // Configure the HTTP request pipeline.
 app.UseEndpoints(endpoints =>
 {
@@ -256,4 +294,7 @@ static void ApplyEnvOverrides(AppSettings s)
     if (bool.TryParse(e("SCOREPOLL_ENABLED"), out var spe)) s.ScorePoll.Enabled = spe;
     if (int.TryParse(e("SCOREPOLL_INTERVAL_SECONDS"), out var spi)) s.ScorePoll.IntervalSeconds = spi;
     if (int.TryParse(e("SCOREPOLL_ACTIVEWINDOW_SECONDS"), out var spw)) s.ScorePoll.ActiveWindowSeconds = spw;
+
+    if (bool.TryParse(e("AGENT_AUTH_ACTIVE"), out var aaa)) s.AgentAuth.isActive = aaa;
+    s.AgentAuth.KeyHeader = e("AGENT_AUTH_KEY_HEADER") ?? s.AgentAuth.KeyHeader;
 }

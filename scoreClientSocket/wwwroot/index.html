@@ -9,9 +9,16 @@
     <div class="container">
         <form id="contact" action="" method="post">
             <h3>Get Market</h3>
+            <p style="text-align:center;margin:-8px 0 16px;"><a href="/docs/">Integration docs &amp; API reference →</a></p>
             <div id="signalrConnect">
                 <fieldset>
                     <input id="txtSignalr" placeholder="Link" type="text" tabindex="1" value="http://localhost:5214/SignalR" />
+                </fieldset>
+                <fieldset>
+                    <!-- Sent as a "?key=" query string on the hub URL, not a header — a browser's
+                         native WebSocket upgrade can't carry custom headers. Must match a Key in
+                         appsettings.json "Agents" (see AgentAuthFilter). -->
+                    <input id="txtAgentKey" placeholder="Agent Key (X-App)" type="text" tabindex="2" />
                 </fieldset>
                 <fieldset>
                     <input name="button" type="button" id="singalr-submit" value="Connect Socket" onclick="Connectsignar()" />
@@ -46,7 +53,7 @@
     </div>
     <script src="lib/jquery-1.6.4.min.js"></script>
     <script src="lib/signalr.min.js"></script>
-    <script src="lib/scoredata.js?v=7"></script>
+    <script src="lib/scoredata.js?v=8"></script>
     <script>
         $(document).ready(function () {
             // Get the domain name from the current URL
@@ -58,8 +65,9 @@
         });
         function Connectsignar() {
             var vlink = $('#txtSignalr').val();
+            var vkey = $('#txtAgentKey').val();
             if (vlink != "") {
-                getConnect(vlink);
+                getConnect(vlink, vkey);
             }
         }
     </script>
