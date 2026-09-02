@@ -160,10 +160,6 @@
   .status.ok{ background:var(--accent-soft); color:var(--accent-strong); }
   .status.err{ background:var(--danger-soft); color:var(--danger); }
 
-  /* ---------- Flow diagram ---------- */
-  .flow{ width:100%; height:auto; margin:6px 0 4px; }
-  .flow text{ font-family:var(--font-mono); }
-
   /* ---------- Checklist ---------- */
   .checklist{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:10px; counter-reset:step; }
   .checklist li{ display:flex; gap:12px; padding:12px 14px; border:1px solid var(--border); border-radius:10px; background:var(--surface); }
@@ -186,7 +182,6 @@
 
     <div class="navgroup">
       <p class="navgroup-label">Start here</p>
-      <a href="#architecture">Architecture</a>
       <a href="#auth">Authentication</a>
     </div>
     <div class="navgroup">
@@ -231,55 +226,6 @@
           <span class="pill sport golf"><span class="dot"></span>Golf</span>
         </div>
       </header>
-
-      <!-- ===================== ARCHITECTURE ===================== -->
-      <section id="architecture">
-        <h2>Architecture at a glance</h2>
-        <p class="section-intro">You integrate against <strong style="color:var(--ink)">scoreClientSocket</strong> only. It relays whatever the internal provider produces — it does not reshape or enrich the score payloads.</p>
-
-        <svg class="flow" viewBox="0 0 720 190" role="img" aria-labelledby="flowTitle flowDesc">
-          <title id="flowTitle">Data flow</title>
-          <desc id="flowDesc">Betfair and CricFeed feed an internal ScoreProvider service, which pushes to scoreClientSocket, which you connect to over REST and WebSocket.</desc>
-          <defs>
-            <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
-              <path d="M0,0 L10,5 L0,10 z" fill="var(--ink-faint)"></path>
-            </marker>
-          </defs>
-          <!-- sources -->
-          <rect x="8" y="20" width="140" height="40" rx="8" fill="var(--surface-alt)" stroke="var(--border-strong)"></rect>
-          <text x="78" y="45" text-anchor="middle" font-size="12" fill="var(--ink-muted)">Betfair</text>
-          <rect x="8" y="128" width="140" height="40" rx="8" fill="var(--surface-alt)" stroke="var(--border-strong)"></rect>
-          <text x="78" y="153" text-anchor="middle" font-size="12" fill="var(--ink-muted)">CricFeed</text>
-
-          <line x1="148" y1="40" x2="248" y2="80" stroke="var(--ink-faint)" stroke-width="1.4" marker-end="url(#arrow)"></line>
-          <line x1="148" y1="148" x2="248" y2="108" stroke="var(--ink-faint)" stroke-width="1.4" marker-end="url(#arrow)"></line>
-
-          <!-- internal provider -->
-          <rect x="250" y="66" width="150" height="52" rx="8" fill="var(--surface)" stroke="var(--border-strong)" stroke-dasharray="3 3"></rect>
-          <text x="325" y="88" text-anchor="middle" font-size="11.5" fill="var(--ink-muted)">ScoreProvider</text>
-          <text x="325" y="103" text-anchor="middle" font-size="10" fill="var(--ink-faint)">(internal — not exposed)</text>
-
-          <line x1="400" y1="92" x2="480" y2="92" stroke="var(--ink-faint)" stroke-width="1.4" marker-end="url(#arrow)"></line>
-
-          <!-- scoreClientSocket -->
-          <rect x="482" y="58" width="150" height="68" rx="9" fill="var(--accent-soft)" stroke="var(--accent)" stroke-width="1.4"></rect>
-          <text x="557" y="86" text-anchor="middle" font-size="12.5" font-weight="600" fill="var(--accent-strong)" font-family="var(--font-mono)">scoreClientSocket</text>
-          <text x="557" y="103" text-anchor="middle" font-size="10" fill="var(--accent-strong)">REST + hub</text>
-
-          <line x1="632" y1="92" x2="705" y2="92" stroke="var(--accent)" stroke-width="1.6" marker-end="url(#arrow)"></line>
-          <text x="668" y="80" text-anchor="middle" font-size="10.5" fill="var(--ink-muted)">key</text>
-
-          <!-- you -->
-          <circle cx="700" cy="92" r="1"></circle>
-          <text x="700" y="150" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)">Your integration</text>
-          <text x="700" y="166" text-anchor="middle" font-size="10" fill="var(--ink-faint)">REST client / socket</text>
-        </svg>
-
-        <div class="callout info">
-          <span class="icon" aria-hidden="true">i</span>
-          <p><strong>One rule to remember:</strong> the payload shapes documented under <a href="#fullscore">Score payloads</a> are whatever the upstream provider produced — scoreClientSocket passes <code class="inline">scoredata</code>/<code class="inline">shortscoredata</code> through as opaque objects.</p>
-        </div>
-      </section>
 
       <!-- ===================== AUTH ===================== -->
       <section id="auth">
