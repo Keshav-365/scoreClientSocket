@@ -13,15 +13,13 @@ COPY ["scoreClientSocket/scoreClientSocket.csproj", "scoreClientSocket/"]
 COPY ["BusinessServices/BusinessServices.csproj", "BusinessServices/"]
 COPY ["Modal/Modal.csproj", "Modal/"]
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet restore "scoreClientSocket/scoreClientSocket.csproj" \
+RUN dotnet restore "scoreClientSocket/scoreClientSocket.csproj" \
         --runtime linux-x64 \
         /p:PublishReadyToRun=true
 
 COPY . .
 
-RUN --mount=type=cache,target=/root/.nuget/packages \
-    dotnet publish "scoreClientSocket/scoreClientSocket.csproj" \
+RUN dotnet publish "scoreClientSocket/scoreClientSocket.csproj" \
         -c Release \
         -o /app/publish \
         --runtime linux-x64 \
