@@ -234,6 +234,20 @@ app.UseCookiePolicy();
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
+// UseDefaultFiles only resolves a directory's index.html when the URL ends in "/" —
+// "/docs" (no trailing slash) doesn't match any static file and falls through to
+// AgentAuthFilter below, which then wrongly demands a key for what should be a public
+// docs page. Redirect the bare path to the trailing-slash form before that happens.
+app.Use(async (context, next) =>
+{
+    if (context.Request.Path == "/docs")
+    {
+        context.Response.Redirect($"{context.Request.PathBase}/docs/", permanent: true);
+        return;
+    }
+    await next();
+});
+
 // Agent key + per-agent IP whitelist check. Runs after static files (wwwroot stays public)
 // and before endpoint routing, so it covers both /api/* controller calls and the SignalR
 // hub's negotiate/WebSocket-upgrade requests.
@@ -256,6 +270,13 @@ app.UseEndpoints(endpoints =>
 if (!string.IsNullOrEmpty(AppCache.Settings.HubSettings.HubName))
 {
     var _GetScore = app.Services.GetRequiredService<getScore>();
+    startupLogger.LogWarning("ScoreClientSocket | Socket | STARTED | hub=/{Hub} | time={Time}",
+        AppCache.Settings.HubSettings.HubName, common.GetDateTime());
+}
+else
+{
+    startupLogger.LogWarning("ScoreClientSocket | Socket | NOT STARTED — HubName not configured | time={Time}",
+        common.GetDateTime());
 }
 app.Run();
 
@@ -297,4 +318,6 @@ static void ApplyEnvOverrides(AppSettings s)
 
     if (bool.TryParse(e("AGENT_AUTH_ACTIVE"), out var aaa)) s.AgentAuth.isActive = aaa;
     s.AgentAuth.KeyHeader = e("AGENT_AUTH_KEY_HEADER") ?? s.AgentAuth.KeyHeader;
+
+    if (bool.TryParse(e("CONNECTION_LOGGING_ENABLED"), out var cle)) s.ConnectionLogging.Enabled = cle;
 }

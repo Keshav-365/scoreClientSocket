@@ -36,6 +36,9 @@ namespace scoreClientSocket.Hubs
                 // RegisterAsUpstream() will reclassify ScoreProvider connections.
                 _ = _dailyStats.IncrClientAsync();
                 _ = _connCount.AddConnectionAsync(Context.ConnectionId);
+                if (AppCache.Settings.ConnectionLogging.Enabled)
+                    _logger.LogWarning("Socketlog | Client | CONNECTED | ConnectionID={ConnId} | time={Time}",
+                        Context.ConnectionId, common.GetDateTime());
                 await base.OnConnectedAsync();
             }
             catch { }
@@ -50,7 +53,12 @@ namespace scoreClientSocket.Hubs
                 await _gs.Upstream.RemoveAsync(Context.ConnectionId);
 
                 if (!wasUpstream)
+                {
                     _ = _connCount.RemoveConnectionAsync(Context.ConnectionId);
+                    if (AppCache.Settings.ConnectionLogging.Enabled)
+                        _logger.LogWarning("Socketlog | Client | DISCONNECTED | ConnectionID={ConnId} | time={Time}",
+                            Context.ConnectionId, common.GetDateTime());
+                }
 
                 await base.OnDisconnectedAsync(exception);
             }
